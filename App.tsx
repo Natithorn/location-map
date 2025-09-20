@@ -12,6 +12,10 @@ import * as Location from "expo-location";
 import MapView, { Marker, PROVIDER_DEFAULT } from "react-native-maps";
 
 export default function App() {
+  const handleDeleteLocation = (idx: number) => {
+    setSavedLocations(savedLocations.filter((_, i) => i !== idx));
+    if (selectedIdx === idx) setSelectedIdx(null);
+  };
   const [savedLocations, setSavedLocations] = useState<SavedLocation[]>([]);
   const [showSaveForm, setShowSaveForm] = useState(false);
   const [placeName, setPlaceName] = useState("");
@@ -85,6 +89,16 @@ export default function App() {
         region={region}
         showsUserLocation={true}
         style={{ flex: 1 }}
+        onPress={e => {
+          const { latitude, longitude } = e.nativeEvent.coordinate;
+          setLocation({ latitude, longitude });
+          setRegion({
+            latitude,
+            longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          });
+        }}
       >
         <Marker
           coordinate={{
@@ -105,8 +119,9 @@ export default function App() {
           />
         ))}
       </MapView>
-      <View style={{ position: "absolute", top: 40, right: 20, gap: 10 }}>
+      <View style={styles.buttonGroup}>
         <Button title="หาตำแหน่งปัจจุบัน" onPress={getCurrentLocation} />
+        <View style={{ height: 10 }} />
         <Button title="บันทึกสถานที่" onPress={() => setShowSaveForm(true)} />
       </View>
       {showSaveForm && (
@@ -148,12 +163,18 @@ export default function App() {
                   });
                   setSelectedIdx(index);
                 }}
+                activeOpacity={0.8}
               >
-                <Text style={{ fontWeight: "bold" }}>{item.name}</Text>
-                <Text>{item.description}</Text>
-                <Text style={{ fontSize: 12, color: "#555" }}>
-                  lat: {item.latitude.toFixed(5)}, lng: {item.longitude.toFixed(5)}
-                </Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontWeight: "bold" }}>{item.name}</Text>
+                    <Text>{item.description}</Text>
+                    <Text style={{ fontSize: 12, color: "#555" }}>
+                      lat: {item.latitude.toFixed(5)}, lng: {item.longitude.toFixed(5)}
+                    </Text>
+                  </View>
+                  <Button title="ลบ" color="#d11a2a" onPress={() => handleDeleteLocation(index)} />
+                </View>
               </TouchableOpacity>
             )}
           />
@@ -214,5 +235,14 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
+  },
+  buttonGroup: {
+    position: "absolute",
+    left: 20,
+    bottom: 220, // ขยับขึ้นจากขอบล่างเพื่อไม่ให้ทับกับ savedList
+    zIndex: 20,
+    width: 180,
+    flexDirection: "column",
+    alignItems: "flex-start",
   },
 });
